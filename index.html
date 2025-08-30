@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>HealthCare+ — Ultimate Dashboard</title>
+  <meta name="description" content="HealthCare+ — Dark universe dashboard for post-discharge care, fever guides, tasks, reminders and more." />
+  <style>
+    /* Dark universe theme */
+    :root{
+      --bg:#060711; --panel:#0b1020; --muted:#9aa7c0; --text:#e6f0ff;
+      --accent:#8b5cf6; --accent2:#60a5fa; --success:#34d399; --danger:#fb7185;
+      --glass: rgba(255,255,255,0.03); --radius:14px; --gap:14px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,Segoe UI,system-ui,Arial;background:radial-gradient(800px 400px at 10% 10%, rgba(96,165,250,0.06), transparent 8%), linear-gradient(180deg,#030312 0%,var(--bg) 60%);color:var(--text);-webkit-font-smoothing:antialiased}
+    a{color:var(--accent2)}
+    /* Header */
+    header{position:sticky;top:0;z-index:40;padding:14px 20px;background:linear-gradient(90deg, rgba(139,92,246,0.12), rgba(96,165,250,0.08));backdrop-filter: blur(6px);border-bottom:1px solid rgba(255,255,255,0.03)}
+    .wrap{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:16px}
+    .logo{font-weight:800;font-size:18px;letter-spacing:0.4px}
+    .subtitle{font-size:13px;color:var(--muted)}
+    .right{margin-left:auto;display:flex;gap:10px;align-items:center}
+    .btn{padding:8px 12px;border-radius:10px;border:none;cursor:pointer;font-weight:700}
+    .btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#031022}
+    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--text)}
+    /* Layout */
+    .main{max-width:1200px;margin:22px auto;display:grid;grid-template-columns:240px 1fr 360px;gap:18px;padding:0 18px}
+    @media (max-width:1100px){.main{grid-template-columns:1fr;}
+      .sidebar{order:2} .center{order:1} .rightcol{order:3}}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);padding:16px;border-radius:12px;box-shadow:0 8px 30px rgba(2,6,23,0.6)}
+    h2{margin:0 0 8px 0;font-size:16px;color:#dbeafe}
+    .muted{color:var(--muted);font-size:13px}
+    input,select,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);outline:none}
+    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+    .sidebar{height:calc(100vh - 120px);position:sticky;top:80px;overflow:auto;padding:12px}
+    .navitem{display:flex;gap:10px;align-items:center;padding:10px;border-radius:10px;margin-bottom:8px;cursor:pointer}
+    .navitem:hover{background:linear-gradient(90deg, rgba(96,165,250,0.03), rgba(139,92,246,0.03))}
+    .navitem.active{background:linear-gradient(90deg, rgba(139,92,246,0.12), rgba(96,165,250,0.08));box-shadow:inset 0 0 20px rgba(96,165,250,0.02)}
+    .task{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:rgba(255,255,255,0.01)}
+    .task.done{opacity:0.6;text-decoration:line-through}
+    .small{font-size:13px;color:var(--muted)}
+    .flex{display:flex;gap:10px;align-items:center}
+    .pill{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);font-size:13px;color:var(--muted)}
+    .fever-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .fever-card{padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));border:1px solid rgba(255,255,255,0.03)}
+    .code{background:#021025;padding:10px;border-radius:8px;font-family:monospace;font-size:13px;color:#bfe0ff;overflow:auto}
+    footer{max-width:1200px;margin:20px auto 50px;padding:0 18px;color:var(--muted);text-align:center}
+    /* Animations */
+    .fade{animation:fadeIn .36s ease both}
+    @keyframes fadeIn{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div>
+        <div class="logo">💙 HealthCare+</div>
+        <div class="subtitle">Dark Universe — Dashboard for post-discharge care</div>
+      </div>
+      <div class="right">
+        <button id="notifyBtn" class="btn btn-primary">🔔 Enable Notifications</button>
+        <button id="logoutBtn" class="btn btn-ghost">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="main">
+    <!-- Sidebar -->
+    <aside class="sidebar card">
+      <div class="fade">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div style="width:48px;height:48px;border-radius:10px;background:linear-gradient(90deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:800">HC</div>
+          <div>
+            <div id="userName" style="font-weight:700">Welcome — Guest</div>
+            <div class="small muted" id="userMeta">Fill details to start</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <div id="navProfile" class="navitem active" data-view="dashboard">🏠 Dashboard</div>
+        <div id="navFever" class="navitem" data-view="fever">🌡 Fever Guide</div>
+        <div id="navTasks" class="navitem" data-view="tasks">✅ Tasks</div>
+        <div id="navReminders" class="navitem" data-view="reminders">⏰ Reminders</div>
+        <div id="navTOS" class="navitem" data-view="tos">📜 Terms</div>
+        <div style="height:14px"></div>
+        <div class="small muted">Quick actions</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+          <button id="addQuickTask" class="btn btn-primary">➕ Add Quick Task</button>
+          <button id="exportBtn" class="btn btn-ghost">⬇️ Export CSV</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Center content -->
+    <section class="center">
+      <!-- Login / Profile fill -->
+      <div id="view-profile" class="card fade">
+        <h2>Profile — Required</h2>
+        <div class="small muted">Please enter your details to unlock the dashboard and notifications.</div>
+        <div style="margin-top:12px">
+          <label>Name</label>
+          <input id="p_name" placeholder="e.g., Rahul Sharma" />
+          <label style="margin-top:8px">Age</label>
+          <input id="p_age" type="number" min="0" />
+          <label style="margin-top:8px">Contact (optional)</label>
+          <input id="p_contact" placeholder="Phone or email" />
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button id="saveProfile" class="btn btn-primary">Save & Continue</button>
+            <button id="skipProfile" class="btn btn-ghost">Fill Later</button>
+          </div>
+          <div id="profileMsg" class="small muted" style="margin-top:8px"></div>
+        </div>
+      </div>
+
+      <!-- Dashboard view -->
+      <div id="view-dashboard" class="card fade" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:start;gap:12px">
+          <div>
+            <h2>Dashboard</h2>
+            <div class="small muted">Overview of today's tasks, upcoming meds, and your selected fever guide.</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div class="pill">Adherence: <span id="adherence">0%</span></div>
+            <div class="pill">Next: <span id="nextItem">—</span></div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+          <div class="card" style="padding:12px">
+            <h3 style="margin:0">Today's Tasks</h3>
+            <div id="tasksToday" style="margin-top:10px"></div>
+            <div style="margin-top:10px;display:flex;gap:8px">
+              <input id="newTaskText" placeholder="Add task like 'Take Paracetamol'" />
+              <input id="newTaskTime" type="time" style="width:120px" />
+              <button id="addTaskBtn" class="btn btn-primary">Add</button>
+            </div>
+          </div>
+
+          <div class="card" style="padding:12px">
+            <h3 style="margin:0">Quick Fever Snapshot</h3>
+            <div class="small muted" style="margin-top:8px">Pick a fever for quick guidance</div>
+            <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+              <select id="quickFeverSelect"></select>
+              <button id="openFeverBtn" class="btn btn-ghost">Open</button>
+            </div>
+            <div id="quickFeverPreview" style="margin-top:12px"></div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="card">
+            <h3 style="margin:0">Upcoming Reminders</h3>
+            <div id="remindersList" style="margin-top:10px"></div>
+          </div>
+
+          <div class="card">
+            <h3 style="margin:0">Activity Log</h3>
+            <div id="activityLog" style="margin-top:10px;max-height:200px;overflow:auto"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fever Guide view -->
+      <div id="view-fever" class="card" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h2>Fever Guide</h2>
+          <div class="small muted">Select from many fevers and get medicine guidance & when to see a doctor</div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+          <input id="feverSearch" placeholder="Search fever (e.g., dengue, malaria)" style="flex:1" />
+          <select id="feverSelectFull" style="width:300px"></select>
+          <button id="viewGuideBtn" class="btn btn-primary">View Guide</button>
+        </div>
+        <div id="feverGuideContent" style="margin-top:14px"></div>
+      </div>
+
+      <!-- Tasks view -->
+      <div id="view-tasks" class="card" style="display:none">
+        <h2>Tasks Manager</h2>
+        <div class="small muted">Create scheduled tasks that trigger reminders.</div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <input id="taskText" placeholder="Task description (eg: Take Dolo 650)" style="flex:1" />
+          <input id="taskTime" type="time" />
+          <button id="createTask" class="btn btn-primary">Create</button>
+        </div>
+        <div id="allTasks" style="margin-top:12px"></div>
+      </div>
+
+      <!-- Reminders view -->
+      <div id="view-reminders" class="card" style="display:none">
+        <h2>Scheduled Reminders</h2>
+        <div class="small muted">System will notify you when a scheduled time arrives (tab must be open).</div>
+        <div id="allReminders" style="margin-top:12px"></div>
+      </div>
+
+      <!-- TOS view -->
+      <div id="view-tos" class="card" style="display:none">
+        <h2>Terms of Service & Disclaimer</h2>
+        <p class="small muted">This app provides informational guidance only. Not medical advice. Consult a qualified clinician for diagnosis and prescriptions. By using this app you accept the terms.</p>
+      </div>
+    </section>
+
+    <!-- Right column -->
+    <aside class="rightcol">
+      <div class="card fade">
+        <h3>Notifications</h3>
+        <div class="small muted">Allow browser notifications for reminders</div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button id="enableNotif" class="btn btn-primary">Enable</button>
+          <button id="testNotif" class="btn btn-ghost">Test</button>
+        </div>
+        <div class="divider" style="height:10px"></div>
+        <h3>Health Quick Tools</h3>
+        <div style="margin-top:10px">
+          <label>Systolic / Diastolic</label>
+          <div class="flex"><input id="systolic" type="number" placeholder="120" /><input id="diastolic" type="number" placeholder="80" /></div>
+          <div style="display:flex;gap:8px;margin-top:8px"><button id="checkBP" class="btn btn-primary">Check BP</button><div id="bpRes" class="small muted" style="padding-left:8px"></div></div>
+        </div>
+      </div>
+
+      <div class="card fade" style="margin-top:12px">
+        <h3>Quick Fever Tips</h3>
+        <div id="tipbox" class="small muted" style="margin-top:8px">Select a fever to see quick tips here.</div>
+      </div>
+    </aside>
+  </div>
+
+  <footer>HealthCare+ Prototype — educational. Always consult a doctor. © 2025</footer>
+
+  <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+
+  <script>
+    // --- State ---
+    const SKEY = 'hcplus_dashboard_v1';
+    let state = { profile:null, tasks:[], reminders:[], logs:[] };
+    try{ const raw = localStorage.getItem(SKEY); if(raw) state = JSON.parse(raw); }catch(e){ console.warn(e); }
+
+    // --- Fever DB (expanded) ---
+    const FEVER_DB = [
+      {id:'viral',title:'Viral Fever (non-specific)',symptoms:['Fever','Body ache','Fatigue'],care:['Rest','Hydration','Paracetamol'],meds:[{name:'Paracetamol',note:'Symptomatic relief; follow dosing'}],warn:['If fever >72h or breathing difficulty seek care']},
+      {id:'dengue',title:'Dengue',symptoms:['High fever','Severe joint pain','Rash'],care:['Strict hydration','Avoid NSAIDs (aspirin)','Monitor platelets'],meds:[{name:'Paracetamol',note:'Preferred — avoid NSAIDs'}],warn:['Bleeding gums, severe abdominal pain — urgent care']},
+      {id:'malaria',title:'Malaria',symptoms:['Fever with chills','Sweats','Headache'],care:['Testing rapidly','Antimalarial after test','Hydration'],meds:[{name:'Artemisinin combination therapy',note:'Prescription only'}],warn:['Any suspected malaria — seek immediate testing']},
+      {id:'typhoid',title:'Typhoid',symptoms:['Gradual fever','Abdominal pain','Loss of appetite'],care:['Antibiotics as prescribed','Hydration','Light diet'],meds:[{name:'Azithromycin/Ceftriaxone',note:'Prescription only'}],warn:['Blood tests and doctor evaluation needed']},
+      {id:'covid',title:'COVID-19',symptoms:['Fever','Cough','Loss of smell/taste'],care:['Isolation','Oxygen monitoring if available','Fluids & rest'],meds:[{name:'Paracetamol',note:'Symptomatic; follow advice'}],warn:['Breathlessness or SpO2 <94% — seek urgent care']},
+      {id:'flu',title:'Seasonal Flu',symptoms:['Fever','Runny nose','Sore throat'],care:['Rest','Warm fluids','Steam inhalation'],meds:[{name:'Paracetamol','note':'Symptomatic'}],warn:['Dehydration or worsening breathing']},
+      {id:'heat',title:'Heat-related fever',symptoms:['High temp after heat exposure','Dizziness'],care:['Cool environment','Hydration','ORS'],meds:[{name:'ORS',note:'Oral rehydration solution'}],warn:['Confusion, collapse — emergency help']},
+      {id:'chik',title:'Chikungunya',symptoms:['Fever','Joint pain','Rash'],care:['Rest','Pain relief (paracetamol)','Hydration'],meds:[{name:'Paracetamol',note:'Preferred; avoid NSAIDs initially if dengue not ruled out'}],warn:['Severe joint pain requiring follow-up']},
+      {id:'yellow',title:'Yellow Fever',symptoms:['Fever','Jaundice','Dark urine'],care:['Supportive care','Hospital admission often required'],meds:[{name:'Supportive care only',note:'No specific antiviral; prevention via vaccine'}],warn:['Seek hospital care']}
+    ];
+
+    // --- DOM refs ---
+    const views = {
+      profile: document.getElementById('view-profile'),
+      dashboard: document.getElementById('view-dashboard'),
+      fever: document.getElementById('view-fever'),
+      tasks: document.getElementById('view-tasks'),
+      reminders: document.getElementById('view-reminders'),
+      tos: document.getElementById('view-tos')
+    };
+
+    // --- Init UI ---
+    function init(){
+      // populate fever selects
+      const quick = document.getElementById('quickFeverSelect');
+      const full = document.getElementById('feverSelectFull');
+      FEVER_DB.forEach(f=>{ const opt = document.createElement('option'); opt.value=f.id; opt.textContent=f.title; quick.appendChild(opt); full.appendChild(opt.cloneNode(true)); });
+      // wire nav
+      ['navProfile','navFever','navTasks','navReminders','navTOS'].forEach(id=> document.getElementById(id).addEventListener('click', ()=>navigate(document.getElementById(id).dataset.view)));
+      document.getElementById('saveProfile').addEventListener('click', saveProfile);
+      document.getElementById('skipProfile').addEventListener('click', ()=>{ showView('dashboard'); });
+      document.getElementById('addTaskBtn').addEventListener('click', addQuickTask);
+      document.getElementById('openFeverBtn').addEventListener('click', ()=>{ document.getElementById('feverSelectFull').value = document.getElementById('quickFeverSelect').value; showView('fever'); renderFever(); });
+      document.getElementById('viewGuideBtn').addEventListener('click', ()=>{ renderFever(); });
+      document.getElementById('createTask').addEventListener('click', createTask);
+      document.getElementById('enableNotif').addEventListener('click', askNotif);
+      document.getElementById('testNotif').addEventListener('click', ()=>sendNotification('Test','This is a test notification.'));
+      document.getElementById('checkBP').addEventListener('click', checkBP);
+      document.getElementById('addQuickTask').addEventListener('click', ()=>{ document.getElementById('newTaskText').focus(); });
+      document.getElementById('exportBtn').addEventListener('click', exportCSV);
+      document.getElementById('notifyBtn').addEventListener('click', askNotif);
+      document.getElementById('logoutBtn').addEventListener('click', logout);
+
+      // load profile
+      if(state.profile){ document.getElementById('userName').textContent = state.profile.name; document.getElementById('userMeta').textContent = state.profile.age+' yrs • '+(state.profile.contact||''); document.getElementById('p_name').value = state.profile.name; document.getElementById('p_age').value = state.profile.age; document.getElementById('p_contact').value = state.profile.contact; showView('dashboard'); } else { showView('profile'); }
+
+      renderTasks(); renderDashboard(); renderReminders(); renderLogs();
+      // schedule existing reminders
+      state.reminders.forEach(scheduleReminder);
+    }
+
+    // --- Navigation ---
+    function navigate(view){ // set nav active
+      $$('.navitem').forEach(n=>n.classList.remove('active'));
+      const el = document.querySelector(`[data-view="${view}"]`);
+      if(el) el.classList.add('active');
+      showView(view);
+    }
+    function showView(v){ Object.keys(views).forEach(k=>views[k].style.display = (k===v)?'block':'none'); }
+
+    // --- Profile ---
+    function saveProfile(){ const n = document.getElementById('p_name').value.trim(); const a = document.getElementById('p_age').value.trim(); const c = document.getElementById('p_contact').value.trim(); if(!n||!a) return showMsg('profileMsg','Please fill name and age'); state.profile={name:n,age:a,contact:c}; localSave(); document.getElementById('userName').textContent = n; document.getElementById('userMeta').textContent = a+' yrs • '+(c||''); showMsg('profileMsg','Saved!'); showView('dashboard'); }
+    function logout(){ if(confirm('Logout and clear profile?')){ state.profile=null; localStorage.removeItem(SKEY); location.reload(); }}
+
+    function showMsg(id,txt){ const el=document.getElementById(id); el.textContent = txt; setTimeout(()=>el.textContent='',1500); }
+
+    // --- Tasks ---
+    function addQuickTask(){ const t = document.getElementById('newTaskText').value.trim(); const tm = document.getElementById('newTaskTime').value; if(!t||!tm) return alert('Add task text and time'); addTask(t,tm); document.getElementById('newTaskText').value=''; document.getElementById('newTaskTime').value=''; }
+    function addTask(desc,time){ addTaskObj({desc,time,done:false,id:genId()}); }
+    function createTask(){ const txt=document.getElementById('taskText').value.trim(); const time=document.getElementById('taskTime').value; if(!txt||!time) return alert('Fill task and time'); addTask(txt,time); document.getElementById('taskText').value=''; document.getElementById('taskTime').value=''; renderTasks(); }
+    function addTaskObj(obj){ state.tasks.push(obj); localSave(); renderTasks(); scheduleTask(obj); log('Task created: '+obj.desc); }
+    function genId(){ return 't'+Math.random().toString(36).slice(2,9); }
+
+    function renderTasks(){ const cont = document.getElementById('allTasks'); cont.innerHTML=''; const todayCont = document.getElementById('tasksToday'); todayCont.innerHTML=''; if(state.tasks.length===0) { todayCont.innerHTML = '<div class="muted">No tasks for today.</div>'; cont.innerHTML = '<div class="muted">No tasks yet.</div>'; return; }
+      state.tasks.forEach(t=>{
+        const d = document.createElement('div'); d.className = 'task'+(t.done? ' done':''); d.innerHTML = `<input type='checkbox' data-id='${t.id}' ${t.done? 'checked':''} /> <div style='flex:1'><strong>${t.desc}</strong><div class='small muted'>${t.time}</div></div><div style='display:flex;gap:6px'><button class='btn btn-ghost' data-del='${t.id}'>Remove</button></div>`;
+        cont.appendChild(d);
+        // if time today -> show in today's panel
+        todayCont.appendChild(d.cloneNode(true));
+      });
+    }
+
+    // delegation events for tasks
+    document.addEventListener('click', (e)=>{
+      const del = e.target.getAttribute('data-del');
+      if(del){ state.tasks = state.tasks.filter(t=>t.id!==del); localSave(); renderTasks(); log('Task removed'); }
+      const nid = e.target.getAttribute('data-id'); if(nid){ const t = state.tasks.find(x=>x.id===nid); if(t){ t.done = e.target.checked; localSave(); renderTasks(); updateAdherence(); log('Task marked: '+t.desc); }}
+    });
+
+    // --- Reminders (same as tasks scheduling) ---
+    function scheduleTask(task){ // schedule a browser timer for the next occurrence of the time
+      const ms = timeToNextMs(task.time);
+      setTimeout(()=>{ sendNotification('Task Reminder', task.desc); log('Reminder: '+task.desc); task.done = true; localSave(); renderTasks(); updateAdherence(); scheduleTask(task); }, ms);
+    }
+
+    function scheduleReminder(rem){ const ms = timeToNextMs(rem.time); const id = setTimeout(()=>{ sendNotification(rem.title || 'Reminder', rem.msg||'Time'); log('Reminder sent: '+(rem.title||rem.msg)); scheduleReminder(rem); }, ms); rem._timerId = id; }
+
+    function timeToNextMs(hhmm){ const [H,M] = hhmm.split(':').map(Number); const now = new Date(); const t = new Date(); t.setHours(H,M,0,0); let ms = t.getTime() - now.getTime(); if(ms < 0) ms += 86400000; return ms; }
+
+    // --- Dashboard render ---
+    function renderDashboard(){ renderTasks(); renderReminders(); renderLogs(); updateAdherence(); renderQuickFeverPreview(); }
+
+    // --- Reminders list ---
+    function renderReminders(){ const el = document.getElementById('allReminders'); el.innerHTML=''; if(state.reminders.length===0){ el.innerHTML='<div class="muted">No reminders set.</div>'; return; } state.reminders.forEach(r=>{ const d=document.createElement('div'); d.className='task'; d.innerHTML = `<div style='flex:1'><strong>${r.title}</strong><div class='small muted'>${r.time}</div></div><div><button class='btn btn-ghost' data-remdel='${r.id}'>Remove</button></div>`; el.appendChild(d); }); }
+    document.addEventListener('click',(e)=>{ const rd = e.target.getAttribute('data-remdel'); if(rd){ state.reminders = state.reminders.filter(r=>r.id!==rd); localSave(); renderReminders(); log('Reminder removed'); }});
+
+    function addReminder(title,msg,time){ const r = {id:genId(),title,msg,time}; state.reminders.push(r); localSave(); scheduleReminder(r); renderReminders(); log('Reminder scheduled: '+title+' @ '+time); }
+
+    // --- Fever rendering ---
+    function renderFever(){ const id = document.getElementById('feverSelectFull').value; const search = document.getElementById('feverSearch').value.trim().toLowerCase(); let f = null; if(search){ f = FEVER_DB.find(x=> x.title.toLowerCase().includes(search) || x.id.includes(search)); if(f) document.getElementById('feverSelectFull').value = f.id; }
+      if(!f) f = FEVER_DB.find(x=> x.id === document.getElementById('feverSelectFull').value);
+      const content = document.getElementById('feverGuideContent'); if(!f){ content.innerHTML = '<div class="muted">Choose a fever to view guidance.</div>'; return; }
+      content.innerHTML = `<div class='fever-card'><div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style='margin:0'>${f.title}</h3><div class='small muted'>Common symptoms: ${f.symptoms.join(', ')}</div></div><div><button class='btn btn-primary' id='setAsActive'>Use</button></div></div><div style='margin-top:10px'><strong>Supportive care</strong><ul>${f.care.map(c=>`<li>${c}</li>`).join('')}</ul><strong>Medicine guidance</strong><ul>${f.meds.map(m=>`<li><strong>${m.name}</strong> — ${m.note||''}</li>`).join('')}</ul><div style='margin-top:8px'><strong>When to seek doctor</strong><ul>${f.warn.map(w=>`<li>${w}</li>`).join('')}</ul></div></div></div>`;
+      document.getElementById('setAsActive')?.addEventListener('click', ()=>{ state.activeFever = f.id; localSave(); document.getElementById('tipbox').textContent = `${f.title} — ${f.care.slice(0,2).join('; ')}`; renderDashboard(); navigate('dashboard'); });
+    }
+
+    // quick preview
+    function renderQuickFeverPreview(){ const sel = document.getElementById('quickFeverSelect').value; const p = FEVER_DB.find(x=>x.id===sel); const box = document.getElementById('quickFeverPreview'); if(!p){ box.innerHTML=''; return; } box.innerHTML = `<div class='small muted'><strong>${p.title}</strong><div>${p.symptoms.join(', ')}</div></div>`; }
+    document.getElementById('quickFeverSelect')?.addEventListener('change', renderQuickFeverPreview);
+
+    // --- Logs ---
+    function log(txt){ state.logs.push({ts:Date.now(),txt}); if(state.logs.length>200) state.logs.shift(); localSave(); renderLogs(); }
+    function renderLogs(){ const el = document.getElementById('activityLog'); el.innerHTML=''; state.logs.slice().reverse().slice(0,40).forEach(l=>{ const d=document.createElement('div'); d.className='small muted'; d.textContent = `${new Date(l.ts).toLocaleString()} — ${l.txt}`; el.appendChild(d); }); document.getElementById('history')?.appendChild(document.createElement('div')); }
+
+    // --- Notifications ---
+    function askNotif(){ if(!('Notification' in window)) return alert('Notifications not supported'); Notification.requestPermission().then(p=>{ if(p==='granted') sendNotification('HealthCare+','Notifications enabled'); }); }
+    function sendNotification(title,msg){ try{ if(Notification.permission==='granted'){ new Notification(title,{ body: msg }); } }catch(e){ console.warn(e); } const a = document.getElementById('beep'); a.currentTime=0; a.play().catch(()=>{}); }
+
+    // --- Send small notification with scheduled tasks ---
+    function sendScheduled(title,msg){ sendNotification(title,msg); }
+
+    // --- BP check ---
+    function checkBP(){ const s = parseInt(document.getElementById('systolic').value); const d = parseInt(document.getElementById('diastolic').value); const out = document.getElementById('bpRes'); if(!s||!d) return out.textContent='Enter values'; if(s<90||d<60) out.textContent='Low BP'; else if(s<=120&&d<=80) out.textContent='Normal'; else if(s<=139||d<=89) out.textContent='Elevated'; else out.textContent='High — consult doctor'; }
+
+    // --- Export CSV ---
+    function exportCSV(){ const rows = [['Timestamp','Event']].concat(state.logs.map(l=>[new Date(l.ts).toLocaleString(), l.txt])); const csv = rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('
+'); const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='hcplus_logs.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
+
+    // --- persistence ---
+    function localSave(){ localStorage.setItem(SKEY, JSON.stringify(state)); }
+
+    // --- schedule tasks on load ---
+    function scheduleAllTasks(){ state.tasks.forEach(t=> scheduleTask(t)); }
+
+    // --- schedule task ---
+    function scheduleTask(t){ const ms = timeToNextMs(t.time); setTimeout(()=>{ sendScheduled('Task: '+t.desc, `It's time — ${t.desc}`); log('Reminder fired: '+t.desc); t.done=true; localSave(); renderTasks(); scheduleTask(t); }, ms); }
+
+    // --- helper to compute next ms (already defined above) ---
+    // reused
+
+    // --- Update adherence ---
+    function updateAdherence(){ const total = state.tasks.length; const done = state.tasks.filter(t=>t.done).length; document.getElementById('adherence').textContent = total? Math.round((done/total)*100)+'%':'0%'; const next = state.tasks.filter(t=>!t.done).sort((a,b)=>a.time.localeCompare(b.time))[0]; document.getElementById('nextItem').textContent = next? `${next.desc} @ ${next.time}` : '—'; }
+
+    // --- utility to select elements by selector list ---
+    function $$(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+    // --- initial schedule for tasks present ---
+    // schedule when adding tasks
+
+    // --- event wiring for createTask button added earlier ---
+    document.getElementById('addTaskBtn').addEventListener('click', ()=>{ const desc = document.getElementById('newTaskText').value.trim(); const time = document.getElementById('newTaskTime').value; if(!desc||!time) return alert('Enter task and time'); const obj = {id:genId(),desc,time,done:false}; state.tasks.push(obj); localSave(); renderTasks(); scheduleTask(obj); log('Added quick task '+desc); document.getElementById('newTaskText').value=''; document.getElementById('newTaskTime').value=''; updateAdherence(); });
+
+    // --- render reminders list ---
+    function renderReminders(){ renderReminders(); }
+
+    // Kickoff
+    init();
+  </script>
+</body>
+</html>
